@@ -182,4 +182,4 @@ node -e "const {generateName} = require('./js'); console.log(generateName('abc12
 
 ## License
 
-MIT
+[GPLv3](LICENSE)
