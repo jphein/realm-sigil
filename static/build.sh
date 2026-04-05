@@ -67,7 +67,7 @@ data = {
     'version': '''$VERSION_NAME''',
     'hash': '$HASH',
     'branch': '$BRANCH',
-    'dirty': $DIRTY,
+    'dirty': $([ "$DIRTY" = "true" ] && echo True || echo False),
     'built': '$BUILT',
     'realm': '$REALM',
     'repo': '$REPO',
