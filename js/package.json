@@ -1,0 +1,12 @@
+{
+  "name": "realm-sigil",
+  "version": "1.0.0",
+  "description": "Deterministic magical version name generation for JP's projects",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "handler.js",
+    "realms.js"
+  ],
+  "license": "MIT"
+}

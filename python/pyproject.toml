@@ -1,0 +1,9 @@
+[project]
+name = "realm-sigil"
+version = "1.0.0"
+description = "Deterministic magical version name generation for JP's projects"
+requires-python = ">=3.11"
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.backends._legacy:_Backend"
