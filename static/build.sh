@@ -80,6 +80,21 @@ with open('version.json', 'w') as f:
 
 echo "✓ version.json written"
 
+# Magical sigil declaration
+RESET="\033[0m"
+GOLD="\033[38;5;220m"
+VIOLET="\033[38;5;141m"
+DIM="\033[2;37m"
+BOLD="\033[1m"
+SPARK="\033[38;5;213m"
+
+echo ""
+echo -e "    ${SPARK}✦${RESET}   ${DIM}── ── ── ── ── ── ── ──${RESET}   ${SPARK}✦${RESET}"
+echo -e "          ${BOLD}${GOLD}${VERSION_NAME}${RESET}"
+echo -e "          ${DIM}realm${RESET} ${VIOLET}${REALM}${RESET}    ${DIM}·${RESET}    ${DIM}sigil bound${RESET}"
+echo -e "    ${SPARK}✦${RESET}   ${DIM}── ── ── ── ── ── ── ──${RESET}   ${SPARK}✦${RESET}"
+echo ""
+
 # Inject/update meta tag in HTML if specified
 if [[ -n "$HTML" && -f "$HTML" ]]; then
   META_CONTENT=$(python3 -c "
@@ -107,4 +122,3 @@ print(json.dumps(d))
   fi
 fi
 
-echo "Done. Version: $VERSION_NAME"
