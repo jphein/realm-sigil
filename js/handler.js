@@ -3,13 +3,44 @@
  */
 
 const { execFileSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 const os = require('os');
 const { versionObject } = require('./index');
 
 const startTime = Date.now();
 const startISO = new Date().toISOString();
 
+/**
+ * Read git state from a `.git_info` JSON file if present at `cwd`. This
+ * is the artifact `realm_sigil_git_info` (in deploy-banner.sh) bakes
+ * before rsync, so production servers can recover hash/branch/dirty
+ * even when `.git` is excluded from the deploy.
+ */
+function readGitInfoFile(cwd) {
+  const dir = cwd || process.cwd();
+  const file = path.join(dir, '.git_info');
+  try {
+    const raw = fs.readFileSync(file, 'utf8');
+    const parsed = JSON.parse(raw);
+    if (typeof parsed.hash !== 'string') return null;
+    return {
+      hash: parsed.hash,
+      branch: typeof parsed.branch === 'string' ? parsed.branch : 'unknown',
+      dirty: parsed.dirty === true,
+    };
+  } catch {
+    return null;
+  }
+}
+
 function gitInfo(cwd) {
+  // Prefer the baked .git_info file — it's the canonical source on
+  // deployed hosts where `.git` was excluded from rsync. Symmetric with
+  // the shell helper realm_sigil_git_info that wrote it.
+  const baked = readGitInfoFile(cwd);
+  if (baked) return baked;
+
   const info = { hash: 'dev', branch: 'unknown', dirty: false };
   try {
     info.hash = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { cwd, encoding: 'utf8' }).trim() || 'dev';
@@ -24,6 +55,17 @@ function gitInfo(cwd) {
     // git not available
   }
   return info;
+}
+
+/**
+ * Detect the JS runtime label for the version response. Bun, Deno, and
+ * Node each expose themselves differently; we pick a stable short string.
+ */
+function runtimeLabel() {
+  if (typeof Bun !== 'undefined' && Bun.version) return `bun${Bun.version}`;
+  if (typeof Deno !== 'undefined' && Deno.version && Deno.version.deno) return `deno${Deno.version.deno}`;
+  if (typeof process !== 'undefined' && process.version) return `node${process.version}`;
+  return 'unknown';
 }
 
 /**
@@ -42,7 +84,7 @@ function makeVersionResponse(name, description, realm, repo, cwd) {
     built: startISO,
     started: startISO,
     uptime: Math.floor((Date.now() - startTime) / 1000),
-    runtime: `node${process.version}`,
+    runtime: runtimeLabel(),
     os: `${process.platform}/${process.arch}`,
     host: os.hostname(),
     pid: process.pid,
@@ -85,4 +127,35 @@ function expressHandler(name, description, realm, repo, cwd) {
   };
 }
 
-module.exports = { makeVersionResponse, nextHandler, vercelHandler, expressHandler, gitInfo };
+/**
+ * Bun.serve-shaped handler. Returns a function that takes a `Request`
+ * and returns a `Response` directly — drop into a Bun.serve route:
+ *
+ *   import { bunHandler } from "realm-sigil/handler";
+ *   const versionRoute = bunHandler("familiar", "...", "fantasy", "https://github.com/jphein/familiar.realm.watch");
+ *   Bun.serve({
+ *     fetch(req) {
+ *       const url = new URL(req.url);
+ *       if (url.pathname === "/api/version") return versionRoute(req);
+ *       ...
+ *     }
+ *   });
+ *
+ * Works with any runtime that supplies the global Request/Response Fetch
+ * API constructors — Bun, Deno, Cloudflare Workers, modern Node.
+ */
+function bunHandler(name, description, realm, repo, cwd) {
+  return (_req) => {
+    const body = JSON.stringify(makeVersionResponse(name, description, realm, repo, cwd));
+    return new Response(body, {
+      status: 200,
+      headers: {
+        'content-type': 'application/json',
+        'cache-control': 'no-cache',
+        'access-control-allow-origin': '*',
+      },
+    });
+  };
+}
+
+module.exports = { makeVersionResponse, nextHandler, vercelHandler, expressHandler, bunHandler, gitInfo };
