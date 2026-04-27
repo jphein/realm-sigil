@@ -58,6 +58,21 @@ if [[ "$HASH" != "dev" ]]; then
   COMMIT_URL="$REPO/commit/$HASH"
 fi
 
+# Magical sigil declaration — printed FIRST so it lands at top of terminal output
+RESET="\033[0m"
+GOLD="\033[38;5;220m"
+VIOLET="\033[38;5;141m"
+DIM="\033[2;37m"
+BOLD="\033[1m"
+SPARK="\033[38;5;213m"
+
+echo ""
+echo -e "    ${SPARK}✦${RESET}   ${DIM}── ── ── ── ── ── ── ──${RESET}   ${SPARK}✦${RESET}"
+echo -e "          ${BOLD}${GOLD}${VERSION_NAME}${RESET}"
+echo -e "          ${DIM}realm${RESET} ${VIOLET}${REALM}${RESET}    ${DIM}·${RESET}    ${DIM}sigil bound${RESET}"
+echo -e "    ${SPARK}✦${RESET}   ${DIM}── ── ── ── ── ── ── ──${RESET}   ${SPARK}✦${RESET}"
+echo ""
+
 # Write version.json
 python3 -c "
 import json
@@ -78,22 +93,7 @@ with open('version.json', 'w') as f:
     f.write('\n')
 "
 
-echo "✓ version.json written"
-
-# Magical sigil declaration
-RESET="\033[0m"
-GOLD="\033[38;5;220m"
-VIOLET="\033[38;5;141m"
-DIM="\033[2;37m"
-BOLD="\033[1m"
-SPARK="\033[38;5;213m"
-
-echo ""
-echo -e "    ${SPARK}✦${RESET}   ${DIM}── ── ── ── ── ── ── ──${RESET}   ${SPARK}✦${RESET}"
-echo -e "          ${BOLD}${GOLD}${VERSION_NAME}${RESET}"
-echo -e "          ${DIM}realm${RESET} ${VIOLET}${REALM}${RESET}    ${DIM}·${RESET}    ${DIM}sigil bound${RESET}"
-echo -e "    ${SPARK}✦${RESET}   ${DIM}── ── ── ── ── ── ── ──${RESET}   ${SPARK}✦${RESET}"
-echo ""
+echo -e "  ${DIM}✓ version.json written${RESET}"
 
 # Inject/update meta tag in HTML if specified
 if [[ -n "$HTML" && -f "$HTML" ]]; then
@@ -112,13 +112,13 @@ print(json.dumps(d))
   if grep -q 'name="realm-version"' "$HTML"; then
     # Update existing
     sed -i "s|<meta name=\"realm-version\"[^>]*>|${META_TAG}|" "$HTML"
-    echo "✓ Updated meta tag in $HTML"
+    echo -e "  ${DIM}✓ Updated meta tag in $HTML${RESET}"
   elif grep -q '</head>' "$HTML"; then
     # Insert before </head>
     sed -i "s|</head>|  ${META_TAG}\n</head>|" "$HTML"
-    echo "✓ Injected meta tag into $HTML"
+    echo -e "  ${DIM}✓ Injected meta tag into $HTML${RESET}"
   else
-    echo "⚠ No </head> found in $HTML — skipping meta injection"
+    echo -e "  ${DIM}⚠ No </head> found in $HTML — skipping meta injection${RESET}"
   fi
 fi
 
